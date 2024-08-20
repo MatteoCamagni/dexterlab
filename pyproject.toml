@@ -1,0 +1,28 @@
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[project]
+name = "dexterlab"
+authors = [
+    {name = "Matteo Camagni"}
+]
+dynamic = ["version"]
+description = "DexterLab: python utilities to handle laboratory in the loop setups"
+readme = "README.md"
+requires-python = ">=3.10.0"
+dependencies = [
+    "plantuml",
+    "StrEnum",
+    "cerberus"
+]
+
+[tool.pdm.version]
+source = "file"
+path = "src/dexterlab/__version__.py"
+
+[tool.pdm.build]
+includes = ["src/*",]
+
+[project.scripts]
+dexterlab = "dexterlab.main:main"
