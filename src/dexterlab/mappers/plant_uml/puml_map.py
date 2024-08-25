@@ -62,6 +62,7 @@ circle "**Port:** {port}" as {port_id}
 
 
 class PumlBaseMapper(DlabMapper):
+    
     TEMPLATE = """@startuml
 'Style
 <style>
@@ -88,6 +89,8 @@ class PumlBaseMapper(DlabMapper):
         self._free_connectors: str = ""
         self._groups: str = ""
         self._setup_defs: str = setup_defs
+        
+        super().__init__()
 
     @abstractmethod
     def add_item(self, item: DlabItem) -> str:
@@ -124,6 +127,8 @@ class PumlBaseMapper(DlabMapper):
 
 
 class DefaultPumlMapper(PumlBaseMapper):
+    NAME: str = "puml"
+    
     # Init
     INIT_DEFS: str = """title {title_label}
 allowmixing

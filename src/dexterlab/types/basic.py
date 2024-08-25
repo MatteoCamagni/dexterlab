@@ -34,8 +34,8 @@ class DlabLink:
         start_port: "str",
         end_port: "str",
         category: str,
-        manual_only: bool,
-        autoconnect: bool,
+        manual_only: bool = False,
+        autoconnect: bool = True,
         **kwargs,
     ):
         self.__name: str = name
@@ -209,7 +209,7 @@ class DlabMapper(ABC):
 
     def __init__(self) -> None:
         pass
-
+    
     @abstractmethod
     def add_item(self, item: DlabItem) -> str:
         pass

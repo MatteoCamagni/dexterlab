@@ -12,6 +12,8 @@ description = "DexterLab: python utilities to handle laboratory in the loop setu
 readme = "README.md"
 requires-python = ">=3.10.0"
 dependencies = [
+    "six",
+    "pyyaml",
     "plantuml",
     "StrEnum",
     "cerberus"

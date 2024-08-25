@@ -68,10 +68,7 @@ class Dlab:
     def __init__(
         self,
         labdef: str,
-        mappers: Dict[str, DlabMapper] = {
-            "puml": DefaultPumlMapper,
-            "str": StringFormatter,
-        },
+        mappers: Dict[str, DlabMapper]| None = None,
     ) -> None:
 
         # Import lab definition
@@ -93,10 +90,13 @@ class Dlab:
         # Init attributes
         self.__nodes: List[DlabNode] = []
         self.__links: List[DlabLink] = []
+        self.__mappers: Dict[str, DlabMapper] = None
 
-        # Init mapper objectss
-        self.__mappers: Dict[str, DlabMapper] = {k: v() for k, v in mappers.items()}
-
+        # Init mapper objects
+        if mappers:
+            self.__mappers = {k: v() for k, v in mappers.items()}
+        else:
+            self.__mappers = self.__get_mappers()
         # Resolve topology
         self.__resolve_items(tmp_lab["items"], tmp_lab["connections"])
         self.__update_node_topolgy()
@@ -119,6 +119,15 @@ class Dlab:
     @property
     def maps(self) -> Dict[str, DlabMapper]:
         return self.__mappers
+    
+    def __get_mappers(self) -> None:
+        out: Dict[str, DlabMapper] = {}
+        for mapper in DlabMapper.__subclasses__():
+            map_name: str | None = getattr(mapper,"NAME",None)
+            if map_name:
+                out[map_name] = mapper()
+                
+        return out
 
     def __check_connections(self, connections: List) -> None:
         temp_list: Set = set(tuple(v[k] for k in self.NODE_KEYS) for v in connections)

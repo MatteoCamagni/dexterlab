@@ -15,6 +15,7 @@ CONNECTION_MAP: Dict = {
 
 
 class StringFormatter(DlabMapper):
+    NAME: str = "strf"
 
     DOC_SKELETON: str = """
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

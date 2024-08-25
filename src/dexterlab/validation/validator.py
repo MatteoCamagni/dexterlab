@@ -6,6 +6,7 @@ from ..types.basic import ConnectorCategory
 
 SCHEMA: dict = {
     "name": {"type": "string", "required": True},
+    "location": {"type": "string", "required": True},
     "description": {"type": "string", "required": True},
     "environment": {"type": "dict", "required": True},
     "items": {
