@@ -61,7 +61,7 @@ circle "**Port:** {port}" as {port_id}
         )
 
 
-class PumlBaseMapper(DlabMapper):
+class PumlBaseMapper():
     
     TEMPLATE = """@startuml
 'Style
@@ -90,8 +90,6 @@ class PumlBaseMapper(DlabMapper):
         self._groups: str = ""
         self._setup_defs: str = setup_defs
         
-        super().__init__()
-
     @abstractmethod
     def add_item(self, item: DlabItem) -> str:
         pass
@@ -126,11 +124,12 @@ class PumlBaseMapper(DlabMapper):
         )
 
 
-class DefaultPumlMapper(PumlBaseMapper):
+class DefaultPumlMapper(PumlBaseMapper,DlabMapper):
     NAME: str = "puml"
     
     # Init
-    INIT_DEFS: str = """title {title_label}
+    INIT_DEFS: str = """header {header}
+title {title_label}
 allowmixing
 skinparam linetype ortho
 skinparam nodesep 50
@@ -248,22 +247,24 @@ class "<b>{label}</b>" as {name} << ({symbol},{colour}) {type}>> {{
             else:
                 self._free_items = node_render + self._free_items
 
-    def export_as_string(self, labname: str, *args, **kwargs) -> str:
+    def export_as_string(self, header: str, labname: str, *args, **kwargs) -> str:
 
         return self._inner_export_as_string(
-            setup_defs=self.INIT_DEFS.format(title_label=labname)
+            setup_defs=self.INIT_DEFS.format(header=header, title_label=labname)
         )
 
     def export(
         self,
         filename: str,
         labname: str,
+        location: str,
         env: Dict = {},
         description: str = "",
         puml_server: str = "http://www.plantuml.com/plantuml/",
         extension: str = None,
         max_attempts: int = 15,
         attempt_pause: float = 1.0,
+        **kwargs,
     ) -> None:
         errors: List = []
         file: Path = Path(filename)
@@ -282,7 +283,7 @@ class "<b>{label}</b>" as {name} << ({symbol},{colour}) {type}>> {{
             file.with_suffix(extension)
 
         server = plantuml.PlantUML(url=puml_server)
-        base = self.export_as_string(labname=labname)
+        base = self.export_as_string(header=f"Laboratory location: {location}", labname=labname)
         for _ in range(max_attempts):
             try:
                 with file.open("wb") as f:

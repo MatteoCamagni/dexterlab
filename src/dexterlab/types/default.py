@@ -1,7 +1,7 @@
-import inspect
+import sys
 from pathlib import Path
-from sys import modules
-from typing import List, Set, Union
+from importlib import import_module
+from typing import List, Set, Union, Any, Literal
 
 from yaml import dump, safe_load
 
@@ -68,6 +68,7 @@ class Dlab:
     def __init__(
         self,
         labdef: str,
+        classes: Dict[str, Any]| None = None,
         mappers: Dict[str, DlabMapper]| None = None,
     ) -> None:
 
@@ -83,6 +84,10 @@ class Dlab:
         self.__name: str = tmp_lab["name"]
         self.__description: str = tmp_lab["description"]
         self.__environment: Dict = tmp_lab["environment"]
+        self.__location: str = tmp_lab["location"]
+        
+        # Import plugins
+        self.__import_plugins(plugins=tmp_lab["plugins"])
 
         # Check input
         self.__check_connections(tmp_lab["connections"])
@@ -91,12 +96,17 @@ class Dlab:
         self.__nodes: List[DlabNode] = []
         self.__links: List[DlabLink] = []
         self.__mappers: Dict[str, DlabMapper] = None
+        self.__classes: Dict[str,Any] = None
+        
+        # Init classes
+        self.__classes = classes if classes else self.__get_classes() 
 
         # Init mapper objects
         if mappers:
             self.__mappers = {k: v() for k, v in mappers.items()}
         else:
             self.__mappers = self.__get_mappers()
+            
         # Resolve topology
         self.__resolve_items(tmp_lab["items"], tmp_lab["connections"])
         self.__update_node_topolgy()
@@ -117,10 +127,37 @@ class Dlab:
         return self.__environment
 
     @property
-    def maps(self) -> Dict[str, DlabMapper]:
+    def mappers(self) -> Dict[str, DlabMapper]:
         return self.__mappers
     
-    def __get_mappers(self) -> None:
+    @property
+    def dexter_classes(self) -> Dict[str, Any]:
+        return self.__classes
+    
+    def __import_plugins(self, plugins: List[str]) -> None:
+        for plg in plugins:
+            # Try absolute import
+            p: Path = Path(plg).absolute()
+            if p.exists():
+                sys.path.append(str(p.parent))
+                plg: str = p.stem
+            
+            # Finally import it
+            import_module(name=plg)
+            
+    
+    def __get_classes(self) -> Dict[str, Any]:
+        out: Dict[str, Any] = {}
+        
+        # Add instrument classes
+        out.update({i_cls.__qualname__ : i_cls for i_cls in DlabInstrument.__subclasses__()})
+            
+        # Add connector classes
+        out.update({c_cls.__qualname__ : c_cls for c_cls in DlabConnector.__subclasses__()})
+                
+        return out
+    
+    def __get_mappers(self) -> Dict[str, DlabMapper]:
         out: Dict[str, DlabMapper] = {}
         for mapper in DlabMapper.__subclasses__():
             map_name: str | None = getattr(mapper,"NAME",None)
@@ -152,16 +189,10 @@ class Dlab:
         raise Exception(f"Error: connection definition is missing for <{conn_name}>")
 
     def __resolve_items(self, setup: List, connections: List) -> None:
-        classes: List = {
-            x: y
-            for x, y in filter(
-                lambda z: inspect.isclass(z[1]), inspect.getmembers(modules[__name__])
-            )
-        }
 
         for item in setup:
             item_name: str = next(iter(item))
-            item_class = classes.get(item_name, None)
+            item_class = self.__classes.get(item_name, None)
             assert (
                 item_class != None
             ), f"Error: <{item_name}> is not a valid virtual laboratory class"
@@ -189,7 +220,7 @@ class Dlab:
                 if isinstance(item, DlabLink):
                     self.__mappers[map_key].add_connection(item)
 
-    def string_representation(self, mapper: str) -> str:
+    def to_string(self, mapper: str) -> str:
         return self.__mappers[mapper].export_as_string(
             labname=self.__name, env=self.__environment, description=self.__description
         )
@@ -197,6 +228,7 @@ class Dlab:
     def export(self, mapper: str, filename: str, **kwargs) -> None:
         self.__mappers[mapper].export(
             filename=filename,
+            location=self.__location,
             labname=self.__name,
             env=self.__environment,
             description=self.__description,

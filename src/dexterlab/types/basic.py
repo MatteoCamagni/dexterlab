@@ -232,6 +232,6 @@ class DlabMapper(ABC):
 
     @abstractmethod
     def export_as_string(
-        self, labname: str, env: Dict = {}, description: str = "", *args, **kwargs
+        self, labname: str, location: str, env: Dict = {}, description: str = "", *args, **kwargs
     ) -> str:
         pass

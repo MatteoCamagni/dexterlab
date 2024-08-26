@@ -20,7 +20,7 @@ class StringFormatter(DlabMapper):
     DOC_SKELETON: str = """
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 LABORATORY: {labname}
-
+Location: {location}
 {descr}
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 |-- Required Environment{environment}
@@ -79,7 +79,7 @@ LABORATORY: {labname}
             end_port=conn.end_node_port,
         )
 
-    def export_as_string(self, labname: str, env: dict, description: str) -> str:
+    def export_as_string(self, labname: str, location: str, env: dict, description: str) -> str:
         if env:
             env_str: str = ""
             for k, v in env.items():
@@ -89,6 +89,7 @@ LABORATORY: {labname}
 
         return self.DOC_SKELETON.format(
             labname=labname,
+            location=location,
             descr=description,
             environment=env_str,
             items=self.__items,
