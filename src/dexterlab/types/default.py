@@ -3,11 +3,12 @@ from pathlib import Path
 from importlib import import_module
 from typing import List, Set, Union, Any, Literal
 
-from yaml import dump, safe_load
+from yaml import dump, safe_load_all
 
 from ..mappers import DefaultPumlMapper, StringFormatter
 from ..validation import validate_lab_definition
 from .basic import *
+from ..utils.deftools import ConfigHandler
 
 
 class GenericInstrument(DlabInstrument):
@@ -68,13 +69,14 @@ class Dlab:
     def __init__(
         self,
         labdef: str,
+        variant: str | None = None,
         classes: Dict[str, Any]| None = None,
         mappers: Dict[str, DlabMapper]| None = None,
     ) -> None:
 
         # Import lab definition
-        with Path(labdef).open("r") as yml:
-            tmp_lab: dict = safe_load(yml)
+        tmp_cfg: ConfigHandler = ConfigHandler(config_path=labdef)
+        tmp_lab: Dict = tmp_cfg.get_config_dict(active_variant=variant)
 
         # Validate the lab definition dictionary
         res, errors = validate_lab_definition(labdef=tmp_lab)
@@ -87,7 +89,7 @@ class Dlab:
         self.__location: str = tmp_lab["location"]
         
         # Import plugins
-        self.__import_plugins(plugins=tmp_lab["plugins"])
+        self.__import_plugins(plugins=tmp_cfg.discovered_plugins)
 
         # Check input
         self.__check_connections(tmp_lab["connections"])
@@ -134,6 +136,21 @@ class Dlab:
     def dexter_classes(self) -> Dict[str, Any]:
         return self.__classes
     
+    # def __get_valid_labdef(self, labdef: str) -> dict:
+    #     # Import lab definition
+    #     with Path(labdef).open("r") as yml:
+    #         iters: List[Dict] = list(safe_load_all(yml))
+            
+    #     if len(iters)
+        
+        
+
+    #     # Validate the lab definition dictionary
+    #     res, errors = validate_lab_definition(labdef=tmp_lab)
+    #     assert res, f"Error: the lab definition is bad formatted.\n{dump(errors)}"
+
+        
+        
     def __import_plugins(self, plugins: List[str]) -> None:
         for plg in plugins:
             # Try absolute import

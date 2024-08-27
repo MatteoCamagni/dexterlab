@@ -5,7 +5,6 @@ from cerberus import Validator
 from ..types.basic import ConnectorCategory
 
 SCHEMA: dict = {
-    "plugins":{'type': 'list', 'schema': {'type': 'string'}, "required": False},
     "name": {"type": "string", "required": True},
     "location": {"type": "string", "required": True},
     "description": {"type": "string", "required": True},
