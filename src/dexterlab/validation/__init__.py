@@ -1,1 +1,1 @@
-from .validator import validate_lab_definition
+from .validator import default_validator

@@ -205,7 +205,7 @@ class DlabConnector(DlabLink, DlabItem):
         return hash_string(self.name + self.serial_number)
 
 
-class DlabMapper(ABC):
+class Dlabformatter(ABC):
 
     def __init__(self) -> None:
         pass
@@ -223,6 +223,7 @@ class DlabMapper(ABC):
         self,
         filename: str,
         labname: str,
+        variant: str | None,
         env: Dict = {},
         description: str = "",
         *args,
@@ -232,6 +233,6 @@ class DlabMapper(ABC):
 
     @abstractmethod
     def export_as_string(
-        self, labname: str, location: str, env: Dict = {}, description: str = "", *args, **kwargs
+        self, labname: str, variant: str | None, location: str, env: Dict = {}, description: str = "", *args, **kwargs
     ) -> str:
         pass

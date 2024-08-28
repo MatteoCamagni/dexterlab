@@ -50,6 +50,6 @@ SCHEMA: dict = {
 }
 
 
-def validate_lab_definition(labdef: dict) -> Tuple[bool, Dict]:
+def default_validator(labdef: dict) -> Tuple[bool, Dict]:
     v = Validator(SCHEMA)
     return v.validate(labdef), v.errors

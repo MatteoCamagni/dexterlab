@@ -1,12 +1,12 @@
 import sys
 from pathlib import Path
 from importlib import import_module
-from typing import List, Set, Union, Any, Literal
+from typing import List, Set, Union, Any, Callable
 
-from yaml import dump, safe_load_all
+from yaml import dump
 
-from ..mappers import DefaultPumlMapper, StringFormatter
-from ..validation import validate_lab_definition
+from ..formatters import DefaultPumlformatter, PlainStringFormatter
+from ..validation import default_validator
 from .basic import *
 from ..utils.deftools import ConfigHandler
 
@@ -71,7 +71,8 @@ class Dlab:
         labdef: str,
         variant: str | None = None,
         classes: Dict[str, Any]| None = None,
-        mappers: Dict[str, DlabMapper]| None = None,
+        formatters: Dict[str, Dlabformatter]| None = None,
+        validator: Callable[[Dict],Tuple[bool,Dict]] = default_validator
     ) -> None:
 
         # Import lab definition
@@ -79,11 +80,12 @@ class Dlab:
         tmp_lab: Dict = tmp_cfg.get_config_dict(active_variant=variant)
 
         # Validate the lab definition dictionary
-        res, errors = validate_lab_definition(labdef=tmp_lab)
+        res, errors = validator(labdef=tmp_lab)
         assert res, f"Error: the lab definition is bad formatted.\n{dump(errors)}"
 
         # Unpack the lab
         self.__name: str = tmp_lab["name"]
+        self.__variant: str | None = variant
         self.__description: str = tmp_lab["description"]
         self.__environment: Dict = tmp_lab["environment"]
         self.__location: str = tmp_lab["location"]
@@ -97,24 +99,24 @@ class Dlab:
         # Init attributes
         self.__nodes: List[DlabNode] = []
         self.__links: List[DlabLink] = []
-        self.__mappers: Dict[str, DlabMapper] = None
+        self.__formatters: Dict[str, Dlabformatter] = None
         self.__classes: Dict[str,Any] = None
         
         # Init classes
         self.__classes = classes if classes else self.__get_classes() 
 
-        # Init mapper objects
-        if mappers:
-            self.__mappers = {k: v() for k, v in mappers.items()}
+        # Init formatter objects
+        if formatters:
+            self.__formatters = {k: v() for k, v in formatters.items()}
         else:
-            self.__mappers = self.__get_mappers()
+            self.__formatters = self.__get_formatters()
             
         # Resolve topology
         self.__resolve_items(tmp_lab["items"], tmp_lab["connections"])
         self.__update_node_topolgy()
 
-        # Resolve mapping
-        self.__update_mappers()
+        # Resolve formatters
+        self.__update_formatters()
 
     @property
     def items(self) -> List[Union[DlabNode, DlabItem]]:
@@ -129,27 +131,17 @@ class Dlab:
         return self.__environment
 
     @property
-    def mappers(self) -> Dict[str, DlabMapper]:
-        return self.__mappers
+    def formatters(self) -> Dict[str, Dlabformatter]:
+        return self.__formatters
     
     @property
     def dexter_classes(self) -> Dict[str, Any]:
         return self.__classes
     
-    # def __get_valid_labdef(self, labdef: str) -> dict:
-    #     # Import lab definition
-    #     with Path(labdef).open("r") as yml:
-    #         iters: List[Dict] = list(safe_load_all(yml))
-            
-    #     if len(iters)
-        
-        
+    @property
+    def active_variant(self) -> str | None:
+        return self.__variant
 
-    #     # Validate the lab definition dictionary
-    #     res, errors = validate_lab_definition(labdef=tmp_lab)
-    #     assert res, f"Error: the lab definition is bad formatted.\n{dump(errors)}"
-
-        
         
     def __import_plugins(self, plugins: List[str]) -> None:
         for plg in plugins:
@@ -160,7 +152,7 @@ class Dlab:
                 plg: str = p.stem
             
             # Finally import it
-            import_module(name=plg)
+            import_module(name=plg,package=p.parent)
             
     
     def __get_classes(self) -> Dict[str, Any]:
@@ -174,12 +166,12 @@ class Dlab:
                 
         return out
     
-    def __get_mappers(self) -> Dict[str, DlabMapper]:
-        out: Dict[str, DlabMapper] = {}
-        for mapper in DlabMapper.__subclasses__():
-            map_name: str | None = getattr(mapper,"NAME",None)
+    def __get_formatters(self) -> Dict[str, Dlabformatter]:
+        out: Dict[str, Dlabformatter] = {}
+        for formatter in Dlabformatter.__subclasses__():
+            map_name: str | None = getattr(formatter,"NAME",None)
             if map_name:
-                out[map_name] = mapper()
+                out[map_name] = formatter()
                 
         return out
 
@@ -230,21 +222,25 @@ class Dlab:
             # Update end node
             link.end_node = self.__get_node(link.end_node_name)
 
-    def __update_mappers(self) -> None:
+    def __update_formatters(self) -> None:
         for item in self.items + self.connections:
-            for map_key in self.__mappers.keys():
-                self.__mappers[map_key].add_item(item)
+            for map_key in self.__formatters.keys():
+                self.__formatters[map_key].add_item(item)
                 if isinstance(item, DlabLink):
-                    self.__mappers[map_key].add_connection(item)
+                    self.__formatters[map_key].add_connection(item)
 
-    def to_string(self, mapper: str) -> str:
-        return self.__mappers[mapper].export_as_string(
-            labname=self.__name, env=self.__environment, description=self.__description
+    def __get_variant_repr(self) -> str:
+        return self.__variant if self.__variant else ''
+
+    def to_string(self, formatter: str) -> str:
+        return self.__formatters[formatter].export_as_string(
+            labname=self.__name, variant=self.__get_variant_repr(), location=self.__location, env=self.__environment, description=self.__description
         )
 
-    def export(self, mapper: str, filename: str, **kwargs) -> None:
-        self.__mappers[mapper].export(
+    def export(self, formatter: str, filename: str, **kwargs) -> None:
+        self.__formatters[formatter].export(
             filename=filename,
+            varianr=self.__get_variant_repr(),
             location=self.__location,
             labname=self.__name,
             env=self.__environment,

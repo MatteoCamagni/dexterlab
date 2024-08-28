@@ -4,7 +4,7 @@ from typing import Dict
 
 from dexterlab.types.basic import DlabConnector, DlabInstrument
 
-from ...types.basic import ConnectorCategory, DlabItem, DlabMapper
+from ...types.basic import ConnectorCategory, DlabItem, Dlabformatter
 
 CONNECTION_MAP: Dict = {
     ConnectorCategory.POWER.name: "---",
@@ -14,12 +14,12 @@ CONNECTION_MAP: Dict = {
 }
 
 
-class StringFormatter(DlabMapper):
+class PlainStringFormatter(Dlabformatter):
     NAME: str = "strf"
 
     DOC_SKELETON: str = """
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-LABORATORY: {labname}
+LABORATORY: {labname}{variant}
 Location: {location}
 {descr}
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -79,16 +79,19 @@ Location: {location}
             end_port=conn.end_node_port,
         )
 
-    def export_as_string(self, labname: str, location: str, env: dict, description: str) -> str:
+    def export_as_string(self, labname: str, variant: str, location: str, env: dict, description: str) -> str:
         if env:
             env_str: str = ""
             for k, v in env.items():
                 env_str += self.ROW_SKELETON.format(pipes="|   ", key=k, val=v)
         else:
             env_str: str = "Not required"
+            
+        variant = '' if variant == '' else ":"+variant
 
         return self.DOC_SKELETON.format(
             labname=labname,
+            variant=variant,
             location=location,
             descr=description,
             environment=env_str,

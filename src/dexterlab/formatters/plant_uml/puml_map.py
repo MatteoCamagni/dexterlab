@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Tuple
 import plantuml
 from strenum import StrEnum
 
-from ...types.basic import DlabConnector, DlabItem, DlabMapper, hash_string
+from ...types.basic import DlabConnector, DlabItem, Dlabformatter, hash_string
 
 MAPPABLE_FIELDS: list = ["PUML_MAP"]
 
@@ -61,7 +61,7 @@ circle "**Port:** {port}" as {port_id}
         )
 
 
-class PumlBaseMapper():
+class PumlBaseformatter():
     
     TEMPLATE = """@startuml
 'Style
@@ -124,7 +124,7 @@ class PumlBaseMapper():
         )
 
 
-class DefaultPumlMapper(PumlBaseMapper,DlabMapper):
+class DefaultPumlformatter(PumlBaseformatter,Dlabformatter):
     NAME: str = "puml"
     
     # Init
@@ -247,10 +247,11 @@ class "<b>{label}</b>" as {name} << ({symbol},{colour}) {type}>> {{
             else:
                 self._free_items = node_render + self._free_items
 
-    def export_as_string(self, header: str, labname: str, *args, **kwargs) -> str:
-
+    def export_as_string(self, header: str, variant: str, labname: str, *args, **kwargs) -> str:
+        variant = '' if variant == '' else ":"+variant
+        
         return self._inner_export_as_string(
-            setup_defs=self.INIT_DEFS.format(header=header, title_label=labname)
+            setup_defs=self.INIT_DEFS.format(header=header, title_label=labname+variant)
         )
 
     def export(
@@ -258,6 +259,7 @@ class "<b>{label}</b>" as {name} << ({symbol},{colour}) {type}>> {{
         filename: str,
         labname: str,
         location: str,
+        variant: str,
         env: Dict = {},
         description: str = "",
         puml_server: str = "http://www.plantuml.com/plantuml/",
@@ -283,7 +285,7 @@ class "<b>{label}</b>" as {name} << ({symbol},{colour}) {type}>> {{
             file.with_suffix(extension)
 
         server = plantuml.PlantUML(url=puml_server)
-        base = self.export_as_string(header=f"Laboratory location: {location}", labname=labname)
+        base = self.export_as_string(header=f"Laboratory location: {location}",variant=variant, labname=labname)
         for _ in range(max_attempts):
             try:
                 with file.open("wb") as f:

@@ -24,10 +24,10 @@ def main() -> None:
 
     argp.add_argument(
         "-m",
-        "--mapper",
+        "--formatter",
         type=str,
         required=True,
-        help="Select a mapper to be used as export mapper",
+        help="Select a formatter to be used as export formatter",
     )
 
     argp.add_argument(
@@ -44,7 +44,7 @@ def main() -> None:
         nargs="+",
         default=[],
         required=False,
-        help="Define one or more argument to be passed to the export function of the selected mapper. Use the format 'param_name=param_value'",
+        help="Define one or more argument to be passed to the export function of the selected formatter. Use the format 'param_name=param_value'",
     )
 
     # Parse command line arguments
@@ -57,7 +57,7 @@ def main() -> None:
     tmp_dlab: Dlab = Dlab(labdef=ns.labdefinition)
 
     # Export the requested output
-    tmp_dlab.export(mapper=ns.mapper, filename=ns.output, **ns.export_arg)
+    tmp_dlab.export(formatter=ns.formatter, filename=ns.output, **ns.export_arg)
 
 
 if __name__ == "__main__":

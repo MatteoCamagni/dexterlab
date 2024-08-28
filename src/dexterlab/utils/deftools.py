@@ -43,7 +43,7 @@ class ConfigHandler:
         yaml.add_constructor("!varfield", self.varfield_constructor)
 
     def variant_representer(self,dumper:yaml.Dumper, data):
-        return dumper.represent_mapping('!variant', {'name': data.name})
+        return dumper.represent_formatters('!variant', {'name': data.name})
 
     def variant_constructor(self,loader, node):
         values = loader.construct_mapping(node)
@@ -53,10 +53,15 @@ class ConfigHandler:
         self.discovered_plugins.append(node.value)
 
     def varfield_constructor(self, loader, node):
+        if self.active_variant == None:
+            raise ValueError("Error: Variant not found, tag interpolaton <!varfield> failed!")
+        return getattr(self.discovered_variants[self.active_variant],node.value)
         return getattr(self.discovered_variants[self.active_variant],node.value)
                    
+        return getattr(self.discovered_variants[self.active_variant],node.value)       
+                   
 
-    def get_config_dict(self, active_variant: str) -> Dict:
+    def get_config_dict(self, active_variant: str | None) -> Dict:
         self.active_variant = active_variant
         
         with self.config_path.open("r") as f:
