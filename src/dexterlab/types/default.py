@@ -240,7 +240,7 @@ class Dlab:
     def export(self, formatter: str, filename: str, **kwargs) -> None:
         self.__formatters[formatter].export(
             filename=filename,
-            varianr=self.__get_variant_repr(),
+            variant=self.__get_variant_repr(),
             location=self.__location,
             labname=self.__name,
             env=self.__environment,
