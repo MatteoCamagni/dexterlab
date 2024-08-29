@@ -209,7 +209,7 @@ class Dlabformatter(ABC):
 
     def __init__(self) -> None:
         pass
-    
+
     @abstractmethod
     def add_item(self, item: DlabItem) -> str:
         pass
@@ -233,6 +233,13 @@ class Dlabformatter(ABC):
 
     @abstractmethod
     def export_as_string(
-        self, labname: str, variant: str | None, location: str, env: Dict = {}, description: str = "", *args, **kwargs
+        self,
+        labname: str,
+        variant: str | None,
+        location: str,
+        env: Dict = {},
+        description: str = "",
+        *args,
+        **kwargs,
     ) -> str:
         pass

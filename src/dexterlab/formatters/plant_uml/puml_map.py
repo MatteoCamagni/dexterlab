@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Tuple
 import plantuml
 from strenum import StrEnum
 
-from ...types.basic import DlabConnector, DlabItem, Dlabformatter, hash_string
+from ...types.basic import DlabConnector, Dlabformatter, DlabItem, hash_string
 
 MAPPABLE_FIELDS: list = ["PUML_MAP"]
 
@@ -61,8 +61,8 @@ circle "**Port:** {port}" as {port_id}
         )
 
 
-class PumlBaseformatter():
-    
+class PumlBaseformatter:
+
     TEMPLATE = """@startuml
 'Style
 <style>
@@ -89,7 +89,7 @@ class PumlBaseformatter():
         self._free_connectors: str = ""
         self._groups: str = ""
         self._setup_defs: str = setup_defs
-        
+
     @abstractmethod
     def add_item(self, item: DlabItem) -> str:
         pass
@@ -124,9 +124,9 @@ class PumlBaseformatter():
         )
 
 
-class DefaultPumlformatter(PumlBaseformatter,Dlabformatter):
+class DefaultPumlformatter(PumlBaseformatter, Dlabformatter):
     NAME: str = "puml"
-    
+
     # Init
     INIT_DEFS: str = """header {header}
 title {title_label}
@@ -247,11 +247,22 @@ class "<b>{label}</b>" as {name} << ({symbol},{colour}) {type}>> {{
             else:
                 self._free_items = node_render + self._free_items
 
-    def export_as_string(self, header: str, variant: str, labname: str, *args, **kwargs) -> str:
-        variant = '' if variant == '' else ":"+variant
-        
+    def export_as_string(
+        self,
+        labname: str,
+        variant: str | None,
+        location: str,
+        env: Dict = {},
+        description: str = "",
+        *args,
+        **kwargs,
+    ) -> str:
+        variant = "" if variant == "" else ":" + variant
+
         return self._inner_export_as_string(
-            setup_defs=self.INIT_DEFS.format(header=header, title_label=labname+variant)
+            setup_defs=self.INIT_DEFS.format(
+                header=f"Laboratory location: {location}", title_label=labname + variant
+            )
         )
 
     def export(
@@ -285,7 +296,13 @@ class "<b>{label}</b>" as {name} << ({symbol},{colour}) {type}>> {{
             file.with_suffix(extension)
 
         server = plantuml.PlantUML(url=puml_server)
-        base = self.export_as_string(header=f"Laboratory location: {location}",variant=variant, labname=labname)
+        base = self.export_as_string(
+            labname=labname,
+            variant=variant,
+            location=location,
+            env=env,
+            description=description,
+        )
         for _ in range(max_attempts):
             try:
                 with file.open("wb") as f:

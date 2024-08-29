@@ -1,14 +1,14 @@
 import sys
-from pathlib import Path
 from importlib import import_module
-from typing import List, Set, Union, Any, Callable
+from pathlib import Path
+from typing import Any, Callable, List, Set, Union
 
 from yaml import dump
 
 from ..formatters import DefaultPumlformatter, PlainStringFormatter
+from ..utils.deftools import ConfigHandler
 from ..validation import default_validator
 from .basic import *
-from ..utils.deftools import ConfigHandler
 
 
 class GenericInstrument(DlabInstrument):
@@ -70,9 +70,9 @@ class Dlab:
         self,
         labdef: str,
         variant: str | None = None,
-        classes: Dict[str, Any]| None = None,
-        formatters: Dict[str, Dlabformatter]| None = None,
-        validator: Callable[[Dict],Tuple[bool,Dict]] = default_validator
+        classes: Dict[str, Any] | None = None,
+        formatters: Dict[str, Dlabformatter] | None = None,
+        validator: Callable[[Dict], Tuple[bool, Dict]] = default_validator,
     ) -> None:
 
         # Import lab definition
@@ -89,7 +89,7 @@ class Dlab:
         self.__description: str = tmp_lab["description"]
         self.__environment: Dict = tmp_lab["environment"]
         self.__location: str = tmp_lab["location"]
-        
+
         # Import plugins
         self.__import_plugins(plugins=tmp_cfg.discovered_plugins)
 
@@ -100,17 +100,17 @@ class Dlab:
         self.__nodes: List[DlabNode] = []
         self.__links: List[DlabLink] = []
         self.__formatters: Dict[str, Dlabformatter] = None
-        self.__classes: Dict[str,Any] = None
-        
+        self.__classes: Dict[str, Any] = None
+
         # Init classes
-        self.__classes = classes if classes else self.__get_classes() 
+        self.__classes = classes if classes else self.__get_classes()
 
         # Init formatter objects
         if formatters:
             self.__formatters = {k: v() for k, v in formatters.items()}
         else:
             self.__formatters = self.__get_formatters()
-            
+
         # Resolve topology
         self.__resolve_items(tmp_lab["items"], tmp_lab["connections"])
         self.__update_node_topolgy()
@@ -133,16 +133,15 @@ class Dlab:
     @property
     def formatters(self) -> Dict[str, Dlabformatter]:
         return self.__formatters
-    
+
     @property
     def dexter_classes(self) -> Dict[str, Any]:
         return self.__classes
-    
+
     @property
     def active_variant(self) -> str | None:
         return self.__variant
 
-        
     def __import_plugins(self, plugins: List[str]) -> None:
         for plg in plugins:
             # Try absolute import
@@ -150,29 +149,32 @@ class Dlab:
             if p.exists():
                 sys.path.append(str(p.parent))
                 plg: str = p.stem
-            
+
             # Finally import it
-            import_module(name=plg,package=p.parent)
-            
-    
+            import_module(name=plg, package=p.parent)
+
     def __get_classes(self) -> Dict[str, Any]:
         out: Dict[str, Any] = {}
-        
+
         # Add instrument classes
-        out.update({i_cls.__qualname__ : i_cls for i_cls in DlabInstrument.__subclasses__()})
-            
+        out.update(
+            {i_cls.__qualname__: i_cls for i_cls in DlabInstrument.__subclasses__()}
+        )
+
         # Add connector classes
-        out.update({c_cls.__qualname__ : c_cls for c_cls in DlabConnector.__subclasses__()})
-                
+        out.update(
+            {c_cls.__qualname__: c_cls for c_cls in DlabConnector.__subclasses__()}
+        )
+
         return out
-    
+
     def __get_formatters(self) -> Dict[str, Dlabformatter]:
         out: Dict[str, Dlabformatter] = {}
         for formatter in Dlabformatter.__subclasses__():
-            map_name: str | None = getattr(formatter,"NAME",None)
+            map_name: str | None = getattr(formatter, "NAME", None)
             if map_name:
                 out[map_name] = formatter()
-                
+
         return out
 
     def __check_connections(self, connections: List) -> None:
@@ -230,11 +232,15 @@ class Dlab:
                     self.__formatters[map_key].add_connection(item)
 
     def __get_variant_repr(self) -> str:
-        return self.__variant if self.__variant else ''
+        return self.__variant if self.__variant else ""
 
     def to_string(self, formatter: str) -> str:
         return self.__formatters[formatter].export_as_string(
-            labname=self.__name, variant=self.__get_variant_repr(), location=self.__location, env=self.__environment, description=self.__description
+            labname=self.__name,
+            variant=self.__get_variant_repr(),
+            location=self.__location,
+            env=self.__environment,
+            description=self.__description,
         )
 
     def export(self, formatter: str, filename: str, **kwargs) -> None:
