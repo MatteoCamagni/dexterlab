@@ -118,6 +118,13 @@ class Dlab:
         # Resolve formatters
         self.__update_formatters()
 
+    def __str__(self) -> str:
+        return self.to_string(formatter="strf")
+
+    @property
+    def name(self) -> str:
+        return self.__name
+
     @property
     def items(self) -> List[Union[DlabNode, DlabItem]]:
         return self.__nodes
@@ -233,6 +240,23 @@ class Dlab:
 
     def __get_variant_repr(self) -> str:
         return self.__variant if self.__variant else ""
+
+    def get_by_name(
+        self, name: str, flt: callable = lambda x: True, base: List = None
+    ) -> DlabItem | None:
+        if base == None:
+            base = self.__nodes + self.__links
+
+        for node in base:
+            if node.name == name and flt(node):
+                return node
+
+        return None
+
+    def get_instrument(self, name: str) -> DlabInstrument | None:
+        return self.get_by_name(
+            name=name, base=self.__nodes, flt=lambda x: isinstance(x, DlabInstrument)
+        )
 
     def to_string(self, formatter: str) -> str:
         return self.__formatters[formatter].export_as_string(

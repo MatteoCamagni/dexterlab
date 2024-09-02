@@ -1,2 +1,2 @@
-from .basic import DlabConnector, DlabItem, Dlabformatter
+from .basic import DlabConnector, Dlabformatter, DlabItem
 from .default import DlabInstrument, DlabLink
