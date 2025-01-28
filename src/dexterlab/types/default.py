@@ -9,7 +9,7 @@ from ..formatters import DefaultPumlformatter, PlainStringFormatter
 from ..utils.deftools import ConfigHandler
 from ..validation import default_validator
 from .basic import *
-
+from logging import getLogger, Logger
 
 class GenericInstrument(DlabInstrument):
 
@@ -73,6 +73,7 @@ class Dlab:
         classes: Dict[str, Any] | None = None,
         formatters: Dict[str, Dlabformatter] | None = None,
         validator: Callable[[Dict], Tuple[bool, Dict]] = default_validator,
+        logger: Logger = getLogger("Dexterlab"),
     ) -> None:
 
         # Import lab definition
@@ -84,6 +85,8 @@ class Dlab:
         assert res, f"Error: the lab definition is bad formatted.\n{dump(errors)}"
 
         # Unpack the lab
+        self.logger: Logger = logger
+        self.__source: Path = Path(labdef).resolve().absolute()
         self.__name: str = tmp_lab["name"]
         self.__variant: str | None = variant
         self.__description: str = tmp_lab["description"]
@@ -97,7 +100,7 @@ class Dlab:
         self.__check_connections(tmp_lab["connections"])
 
         # Init attributes
-        self.__nodes: List[DlabNode] = []
+        self.__nodes: List[Union[DlabNode,DlabItem]] = []
         self.__links: List[DlabLink] = []
         self.__formatters: Dict[str, Dlabformatter] = None
         self.__classes: Dict[str, Any] = None
@@ -121,6 +124,10 @@ class Dlab:
     def __str__(self) -> str:
         return self.to_string(formatter="strf")
 
+    @property
+    def source_file(self) -> Path:
+        return self.__source
+    
     @property
     def name(self) -> str:
         return self.__name
@@ -240,6 +247,21 @@ class Dlab:
 
     def __get_variant_repr(self) -> str:
         return self.__variant if self.__variant else ""
+    
+
+    def turn_on_lab(self) -> None:
+        for nd in self.__nodes:
+            if isinstance(nd,DlabInstrument) and nd.autostart:
+                nd.power_on()
+                nd.connect()
+                self.logger.info(f"Instrument <{nd.name}> powered on and connected")
+
+    def turn_off_lab(self) -> None:
+        for nd in self.__nodes:
+            if isinstance(nd,DlabInstrument) and nd.autostart:
+                nd.disconnect()
+                nd.power_off()
+                self.logger.info(f"Instrument <{nd.name}> discconnected and powered off")
 
     def get_by_name(
         self, name: str, flt: callable = lambda x: True, base: List = None

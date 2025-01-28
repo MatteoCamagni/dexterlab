@@ -122,8 +122,9 @@ class DlabItem(ABC):
     }
 
     def __init__(
-        self, sn: str, pn: str, description: str = None, group: str = None, **kwargs
+        self, sn: str, pn: str, description: str = None, group: str = None, autostart: bool = True, **kwargs
     ) -> None:
+        self.__autostart: bool = autostart
         self.__sn: str = sn
         self.__pn: str = pn
         self.__group: str = group
@@ -143,6 +144,10 @@ class DlabItem(ABC):
     def __repr__(self) -> str:
         return self.__str__()
 
+    @property
+    def autostart(self) -> str:
+        return self.__autostart
+    
     @property
     def serial_number(self) -> str:
         return self.__sn

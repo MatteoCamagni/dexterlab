@@ -52,6 +52,9 @@ Location: {location}
 
         super().__init__()
 
+    def __new_line_replace(self, pipes: str,  base: str) -> str:
+        return base.replace("\n","\n"+pipes)
+
     def add_item(self, item: DlabInstrument) -> None:
         custom_rows: str = ""
         custom_rows += self.ROW_SKELETON.format(
@@ -64,7 +67,7 @@ Location: {location}
         self.__items += self.ELEM_SKELETON.format(
             item_type=item.__class__.__qualname__,
             item_name=item.name,
-            descr=item.description,
+            descr=self.__new_line_replace(base=item.description, pipes="|   " * 2),
             rows=custom_rows,
         )
 

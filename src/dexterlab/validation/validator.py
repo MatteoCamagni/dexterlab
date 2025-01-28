@@ -16,6 +16,7 @@ SCHEMA: dict = {
             "type": "dict",
             "keysrules": {"type": "string", "regex": "^[A-Z]\w*$"},
             "valuesrules": {
+                "allow_unknown": True,
                 "schema": {
                     "name": {"type": "string", "required": True},
                     "pn": {"type": "string", "required": True},
@@ -25,6 +26,7 @@ SCHEMA: dict = {
                 },
             },
         },
+        
     },
     "connections": {
         "type": "list",
