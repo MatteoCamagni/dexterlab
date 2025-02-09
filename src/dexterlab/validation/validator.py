@@ -31,6 +31,7 @@ SCHEMA: dict = {
     "connections": {
         "type": "list",
         "required": True,
+        "nullable": True,
         "schema": {
             "type": "dict",
             "schema": {

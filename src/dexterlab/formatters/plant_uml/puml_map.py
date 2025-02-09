@@ -4,7 +4,6 @@ from time import sleep
 from typing import Any, Dict, List, Tuple
 
 import plantuml
-from strenum import StrEnum
 
 from ...types.basic import DlabConnector, Dlabformatter, DlabItem, hash_string
 

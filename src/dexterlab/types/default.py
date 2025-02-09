@@ -191,11 +191,12 @@ class Dlab:
 
         return out
 
-    def __check_connections(self, connections: List) -> None:
-        temp_list: Set = set(tuple(v[k] for k in self.NODE_KEYS) for v in connections)
-        assert len(temp_list) == len(
-            connections
-        ), "Error: multiple definitions found for the same connection. Check the connection ports and items."
+    def __check_connections(self, connections: List | None) -> None:
+        if connections:
+            temp_list: Set = set(tuple(v[k] for k in self.NODE_KEYS) for v in connections)
+            assert len(temp_list) == len(
+                connections
+            ), "Error: multiple definitions found for the same connection. Check the connection ports and items."
 
     def __get_node(self, node_name: str) -> DlabNode:
         for item in self.__nodes:
@@ -204,17 +205,16 @@ class Dlab:
 
         raise Exception(f"Error: laboratory item not found <{node_name}>")
 
-    def __get_connection(self, conn_name: str, connections: List) -> Dict:
+    def __get_connection(self, conn_name: str, connections: List | None) -> Dict:
         for i, x in enumerate(connections):
             if x.get(self.CONNECTOR_BINDER_KEY) == conn_name:
                 res: Dict = connections.pop(i)
                 del res[self.CONNECTOR_BINDER_KEY]
                 return res
-
+            
         raise Exception(f"Error: connection definition is missing for <{conn_name}>")
 
-    def __resolve_items(self, setup: List, connections: List) -> None:
-
+    def __resolve_items(self, setup: List, connections: List | None) -> None:
         for item in setup:
             item_name: str = next(iter(item))
             item_class = self.__classes.get(item_name, None)
@@ -224,7 +224,7 @@ class Dlab:
             item_value: Dict = item[item_name]
             if issubclass(item_class, DlabNode):
                 self.__nodes.append(item_class(**item_value))
-            elif issubclass(item_class, DlabLink):
+            elif connections and issubclass(item_class, DlabLink):
                 cnt_dict: Dict = self.__get_connection(
                     item_value.get(self.ITEM_NAME_KEY), connections
                 )
