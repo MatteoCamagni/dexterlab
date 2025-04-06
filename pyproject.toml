@@ -16,7 +16,8 @@ dependencies = [
     "pyyaml",
     "plantuml",
     "StrEnum",
-    "cerberus"
+    "cerberus",
+    "diagram"
 ]
 
 [tool.pdm.version]
