@@ -6,7 +6,7 @@ from typing import Any, Callable, List, Set, Union
 from yaml import dump
 
 from ..formatters import DefaultPumlformatter, PlainStringFormatter
-from ..utils.deftools import ConfigHandler
+from ..utils.deftools import ConfigHandler, Variant
 from ..validation import default_validator
 from .basic import *
 from logging import getLogger, Logger
@@ -92,6 +92,7 @@ class Dlab:
         self.__description: str = tmp_lab["description"]
         self.__environment: Dict = tmp_lab["environment"]
         self.__location: str = tmp_lab["location"]
+        self.__variants: List[Dict[str,Variant]] = tmp_cfg.discovered_variants
 
         # Import plugins
         self.__import_plugins(plugins=tmp_cfg.discovered_plugins)
@@ -155,6 +156,10 @@ class Dlab:
     @property
     def active_variant(self) -> str | None:
         return self.__variant
+    
+    @property
+    def discovered_variants(self) -> Dict[str,Variant]:
+        return self.__variants
 
     def __import_plugins(self, plugins: List[str]) -> None:
         for plg in plugins:

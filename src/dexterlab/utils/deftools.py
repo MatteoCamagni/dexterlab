@@ -26,7 +26,6 @@ class ConfigHandler:
         yaml.add_representer(Variant, self.variant_representer)
         yaml.add_constructor("!variant", self.variant_constructor)
         yaml.add_constructor("!plugin", self.plugin_constructor)
-        yaml.add_constructor("!varfield", self.varfield_constructor)
 
     def variant_representer(self, dumper: yaml.Dumper, data):
         return dumper.represent_formatters("!variant", {"name": data.name})
@@ -46,6 +45,9 @@ class ConfigHandler:
             )
         return getattr(self.discovered_variants[self.active_variant], node.value)
 
+    def varfield_parametric_constructor(self, loader, node):
+        return f"Variant Parameter <{node.value}>"
+    
     def __check_variant(self, values: Dict) -> None:
         name = values["name"]
         # Check name
@@ -68,6 +70,12 @@ class ConfigHandler:
 
     def get_config_dict(self, active_variant: str | None) -> Dict:
         self.active_variant = active_variant
+
+        if active_variant:
+            yaml.add_constructor("!varfield", self.varfield_constructor)
+        else:
+            yaml.add_constructor("!varfield", self.varfield_parametric_constructor)
+
 
         with self.config_path.open("r") as f:
             for p in yaml.load_all(f, Loader=yaml.FullLoader):
